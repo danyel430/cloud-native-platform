@@ -1,0 +1,25 @@
+body {
+    background-color: #f8f9fa;
+}
+
+.header-container {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.main-container {
+    min-height: 60vh;
+}
+.legend {
+    background: white;
+    padding: 10px;
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    font-size: 13px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+.legend h4 {
+    margin: 0 0 6px 0;
+    font-weight: bold;
+    font-size: 14px;
+}

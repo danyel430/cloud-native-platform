@@ -1,0 +1,202 @@
+{% extends "layout.html" %}
+
+{% block title %}Buscador de Crímenes{% endblock %}
+
+{% block header %}
+<h1>Buscador de crímenes cometidos en Los Ángeles (2020)</h1>
+<p class="text-muted mb-0">
+    Filtra por hora, tipo de crimen, área, edad y características de la víctima, estado del caso y entorno.
+</p>
+{% endblock %}
+
+{% block content %}
+<form class="row g-3" method="post" action="{{ url_for('home') }}">
+
+    <!-- Hora y minutos-->
+    <div class="col-md-3">
+        <label for="time_occ" class="form-label">Hora aproximada</label>
+        <select name="time_occ" id="time_occ" class="form-select">
+            <option value="All">Cualquiera</option>
+            {% for hora, minuto in hora_minutos %}
+                <option value="{{ hora }}:{{ minuto }}">{{ hora }}:{{ minuto }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <!-- Hora -->
+    <div class="col-md-3">
+        <label for="hour_only" class="form-label">Hora aproximada (solo hora)</label>
+        <select name="hour_only" id="hour_only" class="form-select">
+            <option value="All">Cualquiera</option>
+            {% for h in horas_solas %}
+                <option value="{{ h }}">{{ h }}:00</option>
+            {% endfor %}
+        </select>
+    </div>
+
+
+    <!-- Tipo de crimen -->
+    <div class="col-md-3">
+        <label for="crime_type" class="form-label">Tipo de crimen</label>
+        <select name="crime_type" id="crime_type" class="form-select">
+            <option value="All">Todos</option>
+            {% for tipo in tipos_crimen %}
+                <option value="{{ tipo }}">{{ tipo }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Área -->
+    <div class="col-md-3">
+        <label for="area" class="form-label">Área</label>
+        <select name="area" id="area" class="form-select">
+            <option value="All">Todas</option>
+            {% for area in areas %}
+                <option value="{{ area }}">{{ area }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Edad de la víctima -->
+    <div class="col-md-3">
+        <label for="victim_age" class="form-label">Edad de la víctima</label>
+        <select name="victim_age" id="victim_age" class="form-select">
+            <option value="All">Todas</option>
+            {% for edad in edades_victimas %}
+                {% if edad == 0 %}
+                    <option value="{{ edad }}">Desconocido</option>
+                {% else %}
+                    <option value="{{ edad }}">{{ edad }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Sexo de la víctima -->
+    <div class="col-md-3">
+        <label for="victim_gender" class="form-label">Sexo de la víctima</label>
+        <select name="victim_gender" id="victim_gender" class="form-select">
+            <option value="All">Todos</option>
+            {% for sexo in victim_sexes %}
+                <option value="{{ sexo.codigo }}">
+                    {{ sexo.descripcion }} ({{ sexo.codigo }})
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Modus operandi -->
+    <div class="col-md-3">
+        <label for="modus_operandi" class="form-label">Modus operandi</label>
+        <select name="modus_operandi" id="modus_operandi" class="form-select">
+            <option value="All">Todos</option>
+            {% for modus in modus_operandi %}
+                <option value="{{ modus }}">{{ modus }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Estado del caso -->
+    <div class="col-md-3">
+        <label for="status" class="form-label">Estado del caso</label>
+        <select name="status" id="status" class="form-select">
+            <option value="All">Todos</option>
+            {% for estado in estado_crimen %}
+                <option value="{{ estado.codigo }}">
+                    {{ estado.descripcion }} ({{ estado.codigo }})
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Entorno / lugar -->
+    <div class="col-md-3">
+        <label for="crime_place" class="form-label">Entorno donde ocurrió</label>
+        <select name="crime_place" id="crime_place" class="form-select">
+            <option value="All">Todos</option>
+            {% for lugar in lugares %}
+                <option value="{{ lugar }}">{{ lugar }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Botón de búsqueda -->
+    <div class="col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-dark w-100">Buscar</button>
+    </div>
+</form>
+
+<hr class="my-4">
+
+{% if total_encontrados is defined %}
+    <p class="fw-bold">
+        Resultados encontrados: {{ total_encontrados }}
+        {% if total_encontrados == 200 %}
+            <span class="text-muted">(mostrando máximo 200)</span>
+        {% endif %}
+    </p>
+{% endif %}
+
+{% if resultados and resultados|length > 0 %}
+    <div class="table-responsive">
+        <table class="table table-striped table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Fecha (ocurrencia)</th>
+                    <th>Hora</th>
+                    <th>Tipo de crimen</th>
+                    <th>Área</th>
+                    <th>Edad víctima</th>
+                    <th>Sexo víctima</th>
+                    <th>Entorno</th>
+                    <th>Estado (código)</th>
+                    <th>Descripción estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in resultados %}
+                <tr>
+                    <td>{{ r["DATE OCC"] }}</td>
+                    <td>{{ r["TIME OCC"] }}</td>
+                    <td>{{ r["Crm Cd Desc"] }}</td>
+                    <td>{{ r["AREA NAME"] }}</td>
+                    <td>{{ r["Vict Age"] }}</td>
+                    <td>{{ r["Vict Sex"] }}</td>
+                    <td>{{ r["Premis Desc"] }}</td>
+                    <td>{{ r["Status"] }}</td>
+                    <td>{{ r["Status Desc"] }}</td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <!-- Actualizar estado -->
+                            <form method="post" action="{{ url_for('actualizar_estado_crimen', id=r['_id']) }}">
+                                <select name="nuevo_estado" class="form-select form-select-sm mb-1">
+                                    {% for estado in estado_crimen %}
+                                        <option value="{{ estado.codigo }}"
+                                            {% if estado.codigo == r["Status"] %}selected{% endif %}>
+                                            {{ estado.codigo }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                                    Actualizar
+                                </button>
+                            </form>
+
+                            <!-- Eliminar -->
+                            <form method="post" action="{{ url_for('eliminar_crimen', id=r['_id']) }}"
+                                  onsubmit="return confirm('¿Seguro que quieres eliminar este registro?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                    Eliminar
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <p class="text-muted">No hay resultados que coincidan con los filtros seleccionados.</p>
+{% endif %}
+{% endblock %}

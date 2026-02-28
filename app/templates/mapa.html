@@ -1,0 +1,173 @@
+{% extends "layout.html" %}
+
+{% block title %}Mapa de crímenes{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">Mapa interactivo de crímenes en Los Ángeles</h2>
+<p class="text-muted">
+    Cada punto representa un crimen del dataset. Las zonas coloreadas corresponden a las áreas oficiales del LAPD.
+</p>
+
+<div id="map" style="height: 600px; border-radius: 10px;"></div>
+
+<!-- Leaflet CSS -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    
+    //  Inicializar el mapa
+    
+    var map = L.map("map").setView([34.05, -118.25], 11);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 18,
+        attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+
+   
+    //Añadir los crímenes como puntos
+    
+    var datos = {{ datos | tojson }};
+
+    datos.forEach(function(crimen) {
+        if (!crimen.LAT || !crimen.LON) return;
+
+        var popup = `
+            <strong>${crimen["Crm Cd Desc"] || "Sin descripción"}</strong><br>
+            <b>Área:</b> ${crimen["AREA NAME"] || "N/A"}<br>
+            <b>Edad víctima:</b> ${crimen["Vict Age"] ?? "N/A"}<br>
+            <b>Sexo:</b> ${crimen["Vict Sex"] || "N/A"}<br>
+            <b>Lugar:</b> ${crimen["Premis Desc"] || "N/A"}<br>
+            <b>Fecha:</b> ${crimen["DATE OCC"] || "N/A"}<br>
+            <b>Estado:</b> ${crimen["Status"] || "N/A"}<br>
+        `;
+
+        L.marker([crimen.LAT, crimen.LON]).addTo(map).bindPopup(popup);
+    });
+
+    //  colores del área LAPD
+    
+
+    const PALETA = [
+    "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+    "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
+    "#393b79", "#637939", "#8c6d31", "#843c39", "#7b4173",
+    "#5254a3", "#9c9ede", "#8ca252", "#bd9e39", "#ad494a",
+    "#a55194", "#6b6ecf", "#b5cf6b"
+        ];
+
+
+
+
+
+    const coloresAreas = {};
+    let indiceColor = 0;
+
+    function colorPorArea(nombre) {
+        if (!nombre) return "#CCCCCC";
+
+        if (coloresAreas[nombre]) return coloresAreas[nombre];
+
+        coloresAreas[nombre] = PALETA[indiceColor % PALETA.length];
+        indiceColor++;
+
+        return coloresAreas[nombre];
+    }
+
+    
+    //  Crear la leyenda (pero no añadirla aún)
+    
+
+    var legend = L.control({ position: "bottomright" });
+
+    legend.onAdd = function () {
+        var div = L.DomUtil.create("div", "legend");
+        div.innerHTML = "<h4>Áreas del LAPD</h4>";
+
+        Object.keys(coloresAreas).forEach(area => {
+            const color = coloresAreas[area];
+            div.innerHTML += `
+                <div style="display:flex; align-items:center; margin-bottom:2px;">
+                    <span style="
+                        display:inline-block;
+                        width:16px;
+                        height:16px;
+                        margin-right:6px;
+                        border:1px solid #333;
+                        background:${color};
+                    "></span>
+                    <span>${area}</span>
+                </div>`;
+        });
+
+        return div;
+    };
+
+
+   
+    //  Cargar polígonos oficiales del LAPD y colorearlos
+   
+
+    fetch("https://maps.lacity.org/lahub/rest/services/LAPD/MapServer/3/query?where=1=1&outFields=*&f=geojson")
+        .then(res => res.json())
+        .then(data => {
+
+            L.geoJSON(data, {
+                style: function(feature) {
+                    const nombre = feature.properties.DIVISION
+                                || feature.properties.DIVISION_NA
+                                || feature.properties.APREC
+                                || feature.properties.NAME
+                                || "";
+
+                    return {
+                        color: "#222",
+                        weight: 1,
+                        fillColor: colorPorArea(nombre),
+                        fillOpacity: 0.30
+                    };
+                },
+                onEachFeature: function(feature, layer) {
+                    const nombre = feature.properties.DIVISION
+                                || feature.properties.DIVISION_NA
+                                || feature.properties.APREC
+                                || feature.properties.NAME
+                                || "";
+
+                    layer.bindPopup(`<strong>Área LAPD:</strong> ${nombre}`);
+                }
+            }).addTo(map);
+
+            // ⭐ Ahora que ya hay colores asignados → añadimos la LEYENDA
+            legend.addTo(map);
+
+        })
+        .catch(err => console.error("Error cargando áreas LAPD:", err));
+
+</script>
+
+<style>
+.legend {
+    background: white;
+    padding: 10px;
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    font-size: 13px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+.legend h4 {
+    margin: 0 0 6px 0;
+    font-weight: bold;
+    font-size: 14px;
+}
+</style>
+
+{% endblock %}
