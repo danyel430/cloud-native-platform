@@ -15,7 +15,9 @@ collection_crimes = None
 def init_db():
     global _client, _db, collection_crimes
     if _client is None:
-        uri = os.getenv("strconectDB") # la conexión con la clave que están en el dotenv, que en docker se pasan como variables de entorno a través del docker-compose
+        uri = os.getenv("MONGO_URI") # la conexión con la clave que están en el dotenv, que en docker se pasan como variables de entorno a través del docker-compose
+        if not uri:
+            raise RuntimeError("MONGO_URI environment variable not set")
         _client = pymongo.MongoClient(uri)
         _db = _client.proyecto_final
         collection_crimes = _db["Crimes"]
