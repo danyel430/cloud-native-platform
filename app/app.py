@@ -183,5 +183,5 @@ def actualizar_estado_crimen(id):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000) # habilito acceso externo para que me conecte desde el navegador del host, no solo desde dentro del contenedor. 
+    app.run(host="0.0.0.0", port=5000) # habilito acceso externo 
 

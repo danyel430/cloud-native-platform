@@ -2,12 +2,6 @@ import os
 import pymongo
 
 
-# dotenv.load_dotenv()
-# strconectDB = os.getenv("strconectDB")
-#en vez de hacer eso creo una función para que no se intente cinectar nada más carguen los imports, ya que en docker se van a alevantar ambos contenedores a la vez 
-# y si el contenedor de la app intenta conectarse a la DB antes de que esta esté lista, va a dar error. Con esta función, solo se conecta cuando se llama a init_db() desde app.py, que es después de que se haya levantado la DB.
-
-# función para inicializar la conexión a la DB, que se llama desde app.py
 _client = None
 _db = None
 collection_crimes = None
@@ -15,7 +9,7 @@ collection_crimes = None
 def init_db():
     global _client, _db, collection_crimes
     if _client is None:
-        uri = os.getenv("MONGO_URI") # la conexión con la clave que están en el dotenv, que en docker se pasan como variables de entorno a través del docker-compose
+        uri = os.getenv("MONGO_URI") 
         if not uri:
             raise RuntimeError("MONGO_URI environment variable not set")
         _client = pymongo.MongoClient(uri)
