@@ -3,6 +3,14 @@ import db
 from bson import ObjectId
 
 
+#====================================
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+#sólo para ansible + terraform, no es necesario para el funcionamiento normal de la app, ya que la conexión a la DB se hace con variables de entorno en el Dockerfile
+#mirar el reuirements.txt que también se ha editado para incluir python-dotenv 
+#=================================
 app = Flask(__name__)
 #  Inicializo la DB antes de importar las funciones que la usan, para evitar errores de importación circular
 db.init_db()
